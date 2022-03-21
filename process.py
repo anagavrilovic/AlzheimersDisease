@@ -69,7 +69,7 @@ def train_or_load_diabetic_retinopathy_stage_recognition_model(train_image_paths
             image_features.append(hog_comp)
             print(hog_comp)'''
 
-        desc = LocalBinaryPatterns(9, 3)
+        desc = LocalBinaryPatterns(24, 8)
 
         for img in images:
             hist = desc.describe(img)
@@ -110,7 +110,7 @@ def extract_diabetic_retinopathy_stage_from_image(trained_model, image_path):
     '''nbins, cell_size, block_size, hog = define_hog(image.shape)
     image_feature = hog.compute(image)'''
 
-    desc = LocalBinaryPatterns(9, 3)
+    desc = LocalBinaryPatterns(24, 8)
     hist = desc.describe(image)
     retinopathy_stage = trained_model.predict(hist.reshape(1, -1))
 
