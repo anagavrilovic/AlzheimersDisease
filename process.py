@@ -1,5 +1,4 @@
 # import libraries here
-from imutils import face_utils
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
@@ -59,6 +58,7 @@ def train_or_load_diabetic_retinopathy_stage_recognition_model(train_image_paths
             # plt.imshow(img)
             # plt.show()
             images.append(img)
+        print("Images loaded")
 
         image_features = []
 
@@ -69,20 +69,23 @@ def train_or_load_diabetic_retinopathy_stage_recognition_model(train_image_paths
             image_features.append(hog_comp)
             print(hog_comp)'''
 
-        desc = LocalBinaryPatterns(24, 8)
+        desc = LocalBinaryPatterns(9, 3)
 
         for img in images:
             hist = desc.describe(img)
             image_features.append(hist)
+        print("LBP done")
+        print("SVM started")
 
         x = np.array(image_features)
         y = np.array(train_image_labels)
 
         # print('Train shape: ', x.shape, y.shape)
-        x = reshape_data(x)
+        # x = reshape_data(x)
 
-        clf_svm = LinearSVC(verbose=1)
+        clf_svm = LinearSVC(C=100.0, random_state=42, verbose=1)
         clf_svm.fit(x, y)
+        print("SVM done")
 
         dump(clf_svm, 'svm.joblib')
         y_train_pred = clf_svm.predict(x)
@@ -107,7 +110,7 @@ def extract_diabetic_retinopathy_stage_from_image(trained_model, image_path):
     '''nbins, cell_size, block_size, hog = define_hog(image.shape)
     image_feature = hog.compute(image)'''
 
-    desc = LocalBinaryPatterns(24, 8)
+    desc = LocalBinaryPatterns(9, 3)
     hist = desc.describe(image)
     retinopathy_stage = trained_model.predict(hist.reshape(1, -1))
 
