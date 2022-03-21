@@ -69,7 +69,7 @@ def train_or_load_diabetic_retinopathy_stage_recognition_model(train_image_paths
             image_features.append(hog_comp)
             print(hog_comp)'''
 
-        desc = LocalBinaryPatterns(24, 8)
+        desc = LocalBinaryPatterns(28, 3)
 
         for img in images:
             hist = desc.describe(img)
@@ -96,9 +96,9 @@ def train_or_load_diabetic_retinopathy_stage_recognition_model(train_image_paths
 
 def extract_diabetic_retinopathy_stage_from_image(trained_model, image_path):
     """
-    :param trained_model: <Model> Istrenirani model za prepoznavanje karaktera
-    :param image_path: <String> Putanja do fotografije sa koje treba prepoznati ekspresiju lica
-    :return: <String>  Naziv prediktovane klase (moguce vrednosti su: 'anger', 'contempt', 'disgust', 'happiness', 'neutral', 'sadness', 'surprise'
+    :param trained_model: <Model> Istrenirani model za prepoznavanje faze dijabetesne retinopatije
+    :param image_path: <String> Putanja do fotografije sa koje treba prepoznati fazu dijabetesne retinopatije
+    :return: <String>  Naziv prediktovane klase (moguce vrednosti su: '0', '1', '2', '3', '4')
     """
     retinopathy_stage = ""
 
@@ -110,7 +110,7 @@ def extract_diabetic_retinopathy_stage_from_image(trained_model, image_path):
     '''nbins, cell_size, block_size, hog = define_hog(image.shape)
     image_feature = hog.compute(image)'''
 
-    desc = LocalBinaryPatterns(24, 8)
+    desc = LocalBinaryPatterns(24, 3)
     hist = desc.describe(image)
     retinopathy_stage = trained_model.predict(hist.reshape(1, -1))
 
