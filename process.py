@@ -2,6 +2,7 @@
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
+import random
 from sklearn.svm import LinearSVC
 from sklearn.metrics import accuracy_score
 from joblib import dump, load
@@ -48,6 +49,13 @@ def train_or_load_diabetic_retinopathy_stage_recognition_model(train_image_paths
     :return: Objekat modela
     """
 
+    images_zip = list(zip(train_image_paths, train_image_labels))
+    random.shuffle(images_zip)
+    paths, labels = zip(*images_zip)
+
+    train_image_paths = list(paths)
+    train_image_labels = list(labels)
+
     try:
         clf_svm = load('svm.joblib')
     except:
@@ -69,7 +77,7 @@ def train_or_load_diabetic_retinopathy_stage_recognition_model(train_image_paths
             image_features.append(hog_comp)
             print(hog_comp)'''
 
-        desc = LocalBinaryPatterns(28, 3)
+        desc = LocalBinaryPatterns(30, 3)
 
         for img in images:
             hist = desc.describe(img)
@@ -83,7 +91,7 @@ def train_or_load_diabetic_retinopathy_stage_recognition_model(train_image_paths
         # print('Train shape: ', x.shape, y.shape)
         # x = reshape_data(x)
 
-        clf_svm = LinearSVC(C=100.0, random_state=42, verbose=1)
+        clf_svm = LinearSVC(C=100.0, random_state=42, verbose=1, max_iter=10000)
         clf_svm.fit(x, y)
         print("SVM done")
 
@@ -110,7 +118,7 @@ def extract_diabetic_retinopathy_stage_from_image(trained_model, image_path):
     '''nbins, cell_size, block_size, hog = define_hog(image.shape)
     image_feature = hog.compute(image)'''
 
-    desc = LocalBinaryPatterns(24, 3)
+    desc = LocalBinaryPatterns(30, 3)
     hist = desc.describe(image)
     retinopathy_stage = trained_model.predict(hist.reshape(1, -1))
 
