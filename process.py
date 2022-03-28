@@ -2,7 +2,7 @@
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
-import random
+from sklearn.utils import shuffle
 from sklearn.svm import LinearSVC
 from sklearn.metrics import accuracy_score
 from joblib import dump, load
@@ -49,12 +49,7 @@ def train_or_load_diabetic_retinopathy_stage_recognition_model(train_image_paths
     :return: Objekat modela
     """
 
-    images_zip = list(zip(train_image_paths, train_image_labels))
-    random.shuffle(images_zip)
-    paths, labels = zip(*images_zip)
-
-    train_image_paths = list(paths)
-    train_image_labels = list(labels)
+    # train_image_paths, train_image_labels = shuffle(np.array(train_image_paths), np.array(train_image_labels))
 
     try:
         clf_svm = load('svm.joblib')
