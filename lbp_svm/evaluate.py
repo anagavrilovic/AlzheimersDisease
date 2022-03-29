@@ -7,7 +7,7 @@ import os
 if len(sys.argv) > 1:
     VALIDATION_DATASET_PATH = sys.argv[1]
 else:
-    VALIDATION_DATASET_PATH = '.'+os.path.sep+'dataset'+os.path.sep+'test'+os.path.sep
+    VALIDATION_DATASET_PATH = '..' + os.path.sep + 'dataset' + os.path.sep + 'test' + os.path.sep
 # ------------------------------------------------------------------
 
 labeled_samples = dict()
