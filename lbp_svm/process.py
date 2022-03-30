@@ -23,7 +23,7 @@ def reshape_data(input_data):
 
 
 def resize_image(image):
-    image = cv2.resize(image, (128, 128))
+    image = cv2.resize(image, (256, 256))
     return image
 
 
@@ -49,7 +49,7 @@ def train_or_load_diabetic_retinopathy_stage_recognition_model(train_image_paths
     :return: Objekat modela
     """
 
-    # train_image_paths, train_image_labels = shuffle(np.array(train_image_paths), np.array(train_image_labels))
+    train_image_paths, train_image_labels = shuffle(np.array(train_image_paths), np.array(train_image_labels))
 
     try:
         clf_svm = load('svm.joblib')
@@ -72,13 +72,13 @@ def train_or_load_diabetic_retinopathy_stage_recognition_model(train_image_paths
             image_features.append(hog_comp)
             print(hog_comp)'''
 
-        desc = LocalBinaryPatterns(30, 3)
+        desc = LocalBinaryPatterns(8, 1)
 
-        for img in images:
+        for img, image_path in zip(images, train_image_paths):
             hist = desc.describe(img)
             image_features.append(hist)
-        print("LBP done")
-        print("SVM started")
+            print(image_path)
+        print("LBP done and SVM started")
 
         x = np.array(image_features)
         y = np.array(train_image_labels)
@@ -113,7 +113,7 @@ def extract_diabetic_retinopathy_stage_from_image(trained_model, image_path):
     '''nbins, cell_size, block_size, hog = define_hog(image.shape)
     image_feature = hog.compute(image)'''
 
-    desc = LocalBinaryPatterns(30, 3)
+    desc = LocalBinaryPatterns(8, 1)
     hist = desc.describe(image)
     retinopathy_stage = trained_model.predict(hist.reshape(1, -1))
 
