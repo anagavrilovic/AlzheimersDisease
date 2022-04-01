@@ -5,17 +5,19 @@ import matplotlib.pyplot as plt
 from sklearn.utils import shuffle
 from joblib import dump, load
 
-'''from tensorflow.keras.models import Sequential
+from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D
 from tensorflow.keras.layers import MaxPool2D
 from tensorflow.keras.layers import Flatten
-from tensorflow.keras.layers import Dense'''
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.models import load_model
 
-from keras.models import Sequential
+'''from keras.models import Sequential
 from keras.layers import Conv2D
 from keras.layers import MaxPool2D
 from keras.layers import Flatten
 from keras.layers import Dense
+from keras.models import load_model'''
 
 
 def load_image(path):
@@ -39,11 +41,26 @@ def resize_image(image):
 
 def create_cnn():
     model = Sequential()
-    model.add(Conv2D(filters=32, kernel_size=(3, 3), input_shape=(64, 64, 1), activation='relu'))
+
+    model.add(Conv2D(filters=32, kernel_size=(3, 3), input_shape=(64, 64, 1), activation='relu', padding="same"))
     model.add(MaxPool2D(pool_size=(2, 2)))
+
+    model.add(Conv2D(filters=32, kernel_size=(3, 3), input_shape=(64, 64, 1), activation='relu', padding="same"))
+    model.add(MaxPool2D(pool_size=(2, 2)))
+
+    model.add(Conv2D(filters=32, kernel_size=(3, 3), input_shape=(64, 64, 1), activation='relu', padding="same"))
+    model.add(MaxPool2D(pool_size=(2, 2)))
+
+    model.add(Conv2D(filters=64, kernel_size=(3, 3), input_shape=(64, 64, 1), activation='relu', padding="same"))
+    model.add(MaxPool2D(pool_size=(2, 2)))
+
+    model.add(Conv2D(filters=64, kernel_size=(3, 3), input_shape=(64, 64, 1), activation='relu', padding="same"))
+    model.add(MaxPool2D(pool_size=(2, 2)))
+
     model.add(Flatten())
 
     model.add(Dense(units=128, activation='relu'))
+    model.add(Dense(units=64, activation='relu'))
     model.add(Dense(units=5, activation='softmax'))
 
     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
@@ -61,12 +78,13 @@ def train_or_load_diabetic_retinopathy_stage_recognition_model(train_image_paths
     train_image_paths, train_image_labels = shuffle(np.array(train_image_paths), np.array(train_image_labels))
 
     try:
-        model = load('cnn.h5')
+        model = load_model('cnn.h5')
     except:
         images = []
         for image_path in train_image_paths:
             img = load_image(image_path)
             img = resize_image(img)
+            img = np.reshape(img, img.shape + (1, ))
             # display_image(img)
             images.append(img)
         print("Images loaded")
@@ -92,9 +110,10 @@ def extract_diabetic_retinopathy_stage_from_image(trained_model, image_path):
 
     image = load_image(image_path)
     image = resize_image(image)
+    image = np.reshape(image, image.shape + (1,))
     # display_image(img)
 
-    image = np.asarray(image)
+    # image = np.asarray(image)[0]
     retinopathy_stage = trained_model.predict(image)
 
     print(image_path, '\t\t', retinopathy_stage)

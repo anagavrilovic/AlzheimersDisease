@@ -28,7 +28,7 @@ for root, dirs, files in os.walk(TRAIN_DATASET_PATH):
         if len(path) == 4:
             label_dict[file] = path[3]
             train_image_paths.append(os.path.join(TRAIN_DATASET_PATH, path[3], file))
-            train_image_labels.append(path[3])
+            train_image_labels.append(int(path[3]))
 
 # istrenirati model za prepoznavanje faze dijabetesne retinopatije
 model = train_or_load_diabetic_retinopathy_stage_recognition_model(train_image_paths, train_image_labels)
