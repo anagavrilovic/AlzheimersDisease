@@ -7,7 +7,7 @@ from sklearn.svm import LinearSVC
 from sklearn.metrics import accuracy_score
 from joblib import dump, load
 from localbinarypatterns import LocalBinaryPatterns
-import ann_functions
+# import ann_functions
 
 
 def load_image(path):
@@ -73,7 +73,7 @@ def train_or_load_diabetic_retinopathy_stage_recognition_model(train_image_paths
             image_features.append(hog_comp)
             print(hog_comp)'''
 
-        desc = LocalBinaryPatterns(8, 1)
+        desc = LocalBinaryPatterns(16, 2)
 
         for img, image_path in zip(images, train_image_paths):
             hist = desc.describe(img)
@@ -83,6 +83,8 @@ def train_or_load_diabetic_retinopathy_stage_recognition_model(train_image_paths
 
         x = np.array(image_features)
         y = np.array(train_image_labels)
+        print(x.shape)
+        print(x[0].shape)
 
         # print('Train shape: ', x.shape, y.shape)
         # x = reshape_data(x)
@@ -147,7 +149,7 @@ def extract_diabetic_retinopathy_stage_from_image(trained_model, image_path):
     '''nbins, cell_size, block_size, hog = define_hog(image.shape)
     image_feature = hog.compute(image)'''
 
-    desc = LocalBinaryPatterns(8, 1)
+    desc = LocalBinaryPatterns(16, 2)
     hist = desc.describe(image)
     retinopathy_stage = trained_model.predict(hist.reshape(1, -1))
 
@@ -156,6 +158,6 @@ def extract_diabetic_retinopathy_stage_from_image(trained_model, image_path):
     x = x.reshape((x.shape[0], 1))
     retinopathy_stage = trained_model.predict(x)'''
 
-    print(image_path, ' ', retinopathy_stage)
+    print(image_path, '\t\t', retinopathy_stage)
 
     return retinopathy_stage[0]

@@ -1,8 +1,12 @@
 import numpy as np
 
 # keras
+'''from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Activation
+from tensorflow.keras.optimizers import SGD
+from tensorflow.keras.models import model_from_json'''
 from keras.models import Sequential
-from keras.layers.core import Dense, Activation
+from keras.layers import Dense, Activation
 from keras.optimizers import SGD
 from keras.models import model_from_json
 
