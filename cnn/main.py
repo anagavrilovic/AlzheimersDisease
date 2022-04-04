@@ -35,7 +35,8 @@ model = train_or_load_diabetic_retinopathy_stage_recognition_model(train_image_p
 
 # izvrsiti citanje teksta sa svih fotografija iz validacionog skupa podataka, koriscenjem istreniranog modela
 processed_image_names = []
-extracted_retinopathy_stage = []
+extracted_retinopathy_stages = []
+test_image_paths = []
 
 for root, dirs, files in os.walk(VALIDATION_DATASET_PATH):
     path = root.split(os.sep)
@@ -43,13 +44,19 @@ for root, dirs, files in os.walk(VALIDATION_DATASET_PATH):
         if len(path) == 4:
             processed_image_names.append(file)
             image_path = os.path.join(VALIDATION_DATASET_PATH, path[3], file)
-            extracted_retinopathy_stage.append(extract_diabetic_retinopathy_stage_from_image(model, image_path))
+            test_image_paths.append(image_path)
+
+extracted_retinopathy_stage_probabilities = extract_diabetic_retinopathy_stage_from_image(model, test_image_paths)
+
+for probability in extracted_retinopathy_stage_probabilities:
+    index = probability.index(max(probability))
+    extracted_retinopathy_stages.append(index)
 
 # -----------------------------------------------------------------
 # Kreiranje fajla sa rezultatima ekstrakcije za svaku sliku
 result_file_contents = ""
 for image_index, image_name in enumerate(processed_image_names):
-    result_file_contents += "%s,%s\n" % (image_name, extracted_retinopathy_stage[image_index])
+    result_file_contents += "%s,%s\n" % (image_name, extracted_retinopathy_stages[image_index])
 # sacuvaj formirane rezultate u csv fajl
 with open('result.csv', 'w') as output_file:
     output_file.write(result_file_contents)
