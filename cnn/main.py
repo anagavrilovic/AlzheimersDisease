@@ -80,12 +80,3 @@ print('Accuracy:', percentage, '%')
 print(classification_report(y_true=list(map(str, test_image_labels_str)),
                             y_pred=list(map(str, extracted_retinopathy_stages_str)),
                             target_names=list(map(str, diseases_classes))))
-
-
-# Kreiranje fajla sa rezultatima ekstrakcije za svaku sliku
-'''result_file_contents = ""
-for image_index, image_name in enumerate(processed_image_names):
-    result_file_contents += "%s,%s\n" % (image_name, extracted_retinopathy_stages[image_index])
-# sacuvaj formirane rezultate u csv fajl
-with open('result.csv', 'w') as output_file:
-    output_file.write(result_file_contents)'''
