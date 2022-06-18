@@ -21,8 +21,6 @@ from sklearn.utils import shuffle
 import matplotlib.pyplot as plt
 
 
-# PRETRAINED_MODEL_URL = "https://tfhub.dev/google/tf2-preview/mobilenet_v2/feature_vector/4" 74.31%
-PRETRAINED_MODEL_URL = "https://tfhub.dev/google/imagenet/resnet_v2_101/feature_vector/5"
 DATASET_PATH = '..' + os.path.sep + 'dataset'
 IMAGE_SIZE = (128, 128)
 
@@ -103,11 +101,8 @@ except:
     )
     vgg19.trainable = False
 
-    pretrained_layer = hub.KerasLayer(PRETRAINED_MODEL_URL, input_shape=IMAGE_SIZE+(3,), arguments=dict(batch_norm_momentum=0.997), trainable=True)
-
     model = Sequential()
-    # model.add(vgg19)
-    model.add(pretrained_layer)
+    model.add(vgg19)
     model.add(Conv2D(filters=256, kernel_size=(3, 3), activation='relu', padding="same"))
     model.add(MaxPool2D(pool_size=(2, 2)))
     model.add(Conv2D(filters=512, kernel_size=(3, 3), activation='relu', padding="same"))
