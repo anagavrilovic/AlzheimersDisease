@@ -154,3 +154,5 @@ cython_debug/
 dataset
 dataset1
 dataset2
+
+cnn/models/*

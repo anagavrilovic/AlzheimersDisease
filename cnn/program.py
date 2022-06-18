@@ -24,11 +24,11 @@ import matplotlib.pyplot as plt
 # PRETRAINED_MODEL_URL = "https://tfhub.dev/google/tf2-preview/mobilenet_v2/feature_vector/4" 74.31%
 PRETRAINED_MODEL_URL = "https://tfhub.dev/google/imagenet/resnet_v2_101/feature_vector/5"
 DATASET_PATH = '..' + os.path.sep + 'dataset'
-IMAGE_SIZE = (224, 224)
+IMAGE_SIZE = (128, 128)
 
 
 # Read image paths and labels and write to dictionary
-train_images_dict = dict()
+images_dict = dict()
 classes = []
 for root, dirs, files in os.walk(DATASET_PATH):
     path = root.split(os.sep)
@@ -38,13 +38,13 @@ for root, dirs, files in os.walk(DATASET_PATH):
     for file in files:
         if len(path) == 3:
             if path[2] == 'MildDemented':
-                train_images_dict[os.path.join(DATASET_PATH, path[2], file)] = 0
+                images_dict[os.path.join(DATASET_PATH, path[2], file)] = 0
             elif path[2] == 'ModerateDemented':
-                train_images_dict[os.path.join(DATASET_PATH, path[2], file)] = 1
+                images_dict[os.path.join(DATASET_PATH, path[2], file)] = 1
             elif path[2] == 'NonDemented':
-                train_images_dict[os.path.join(DATASET_PATH, path[2], file)] = 2
+                images_dict[os.path.join(DATASET_PATH, path[2], file)] = 2
             elif path[2] == 'VeryMildDemented':
-                train_images_dict[os.path.join(DATASET_PATH, path[2], file)] = 3
+                images_dict[os.path.join(DATASET_PATH, path[2], file)] = 3
 
 class_number = len(classes)
 
@@ -52,7 +52,7 @@ class_number = len(classes)
 # Load images
 train_images = []
 train_image_labels = []
-for image_path, image_label in train_images_dict.items():
+for image_path, image_label in images_dict.items():
     img = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB)
     img = cv2.resize(img, IMAGE_SIZE)
     train_images.append(img)
@@ -62,15 +62,6 @@ for image_path, image_label in train_images_dict.items():
 train_images = np.array(train_images, dtype=float)
 train_image_labels = np.array(train_image_labels, dtype=float)
 
-# Oversampling
-sm = SMOTE(random_state=42)
-train_images, train_image_labels = sm.fit_resample(train_images.reshape(-1, IMAGE_SIZE[0] * IMAGE_SIZE[1] * 3), train_image_labels)
-train_images = train_images.reshape(-1, IMAGE_SIZE[0], IMAGE_SIZE[1], 3)
-
-
-# Shuffle data
-train_images, train_image_labels = shuffle(train_images, train_image_labels)
-
 
 # Split to train and test
 train_images, test_images, train_image_labels, test_image_labels = train_test_split(
@@ -79,14 +70,28 @@ train_images, test_images, train_image_labels, test_image_labels = train_test_sp
     test_size=0.2,
     random_state=15,
     stratify=train_image_labels)
+
 train_images = train_images / 255
 test_images = test_images / 255
 print("Train test split")
 
 
+# Oversampling
+sm = SMOTE(random_state=42)
+train_images, train_image_labels = sm.fit_resample(train_images.reshape(-1, IMAGE_SIZE[0] * IMAGE_SIZE[1] * 3), train_image_labels)
+train_images = train_images.reshape(-1, IMAGE_SIZE[0], IMAGE_SIZE[1], 3)
+
+test_images, test_image_labels = sm.fit_resample(test_images.reshape(-1, IMAGE_SIZE[0] * IMAGE_SIZE[1] * 3), test_image_labels)
+test_images = test_images.reshape(-1, IMAGE_SIZE[0], IMAGE_SIZE[1], 3)
+
+
+# Shuffle data
+train_images, train_image_labels = shuffle(train_images, train_image_labels)
+
+
 # Create and train model
 try:
-    model = load_model('cnn.h5')
+    model = load_model('models/cnn.h5')
 except:
     vgg19 = VGG19(
         include_top=False,
@@ -98,9 +103,9 @@ except:
     )
     vgg19.trainable = False
 
-    pretrained_model = Sequential([
+    '''pretrained_model = Sequential([
         hub.KerasLayer(PRETRAINED_MODEL_URL, input_shape=IMAGE_SIZE+(3,), trainable=False)
-    ])
+    ])'''
 
     model = Sequential()
     model.add(vgg19)
@@ -116,8 +121,27 @@ except:
 
     model.compile(optimizer="adam", loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
-    model.fit(train_images, train_image_labels, epochs=10, verbose=1)
-    model.save('cnn.h5')
+    history = model.fit(train_images, train_image_labels, epochs=20, verbose=1)
+    model.save('models/cnn.h5')
+
+    print(history.history.keys())
+
+    # Plotting accuracy and loss during training
+    # accuracy
+    plt.plot(history.history['accuracy'])
+    plt.title('model accuracy')
+    plt.ylabel('accuracy')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'test'], loc='upper left')
+    plt.show()
+
+    # loss
+    plt.plot(history.history['loss'])
+    plt.title('model loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'test'], loc='upper left')
+    plt.show()
 
 
 # Evaluate and predict
@@ -137,7 +161,7 @@ for prediction in predictions:
 # Statistics
 test_image_labels_str = []
 for label in test_image_labels:
-    test_image_labels_str.append(classes[label])
+    test_image_labels_str.append(classes[int(label)])
 predicted_labels_str = []
 for label in predicted_labels:
     predicted_labels_str.append(classes[label])
@@ -156,6 +180,7 @@ plt.show()
 percentage = accuracy_score(test_image_labels_str, predicted_labels_str)*100
 print('Accuracy:', percentage, '%')
 
+# Classification report
 print(classification_report(y_true=list(map(str, test_image_labels_str)),
                             y_pred=list(map(str, predicted_labels_str)),
                             target_names=list(map(str, classes))))
