@@ -99,39 +99,6 @@ def train_or_load_diabetic_retinopathy_stage_recognition_model(train_image_paths
         
     return clf_svm
 
-    '''model = ann_functions.load_trained_ann()
-
-    if model is None:
-        images = []
-        for image_path in train_image_paths:
-            img = load_image(image_path)
-            img = resize_image(img)
-            # plt.imshow(img)
-            # plt.show()
-            images.append(img)
-        print("Images loaded")
-
-        image_features = []
-
-        desc = LocalBinaryPatterns(8, 1)
-        for img, image_path in zip(images, train_image_paths):
-            hist = desc.describe(img)
-            image_features.append(hist)
-            print(image_path)
-        print("LBP done and SVM started")
-
-        inputs = np.array(image_features).reshape(1, -1)
-        outputs = np.array(train_image_labels).reshape(1, -1)
-
-        print("Treniranje modela zapoceto.")
-        model = ann_functions.create_ann(len(image_features))
-        print("Kreirana")
-        model = ann_functions.train_ann(model, inputs, outputs)
-        print("Treniranje modela zavrseno.")
-        ann_functions.serialize_ann(model)
-
-    return model'''
-
 
 def extract_diabetic_retinopathy_stage_from_image(trained_model, image_path):
     """
