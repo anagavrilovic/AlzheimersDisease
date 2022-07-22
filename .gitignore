@@ -156,3 +156,4 @@ dataset1
 dataset2
 
 cnn/models/*
+cnn/models-vgg19/*

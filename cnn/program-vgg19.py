@@ -2,8 +2,6 @@ import numpy as np
 import cv2
 import os
 
-import tensorflow_hub as hub
-
 from imblearn.over_sampling import SMOTE
 
 from tensorflow.keras.models import Sequential
@@ -14,6 +12,8 @@ from tensorflow.keras.layers import MaxPool2D
 from tensorflow.keras.layers import Flatten
 from tensorflow.keras.applications import VGG19
 from tensorflow.keras.models import load_model
+import tensorflow as tf
+import tensorflow.keras.backend as K
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, accuracy_score, classification_report
@@ -74,23 +74,26 @@ test_images = test_images / 255
 print("Train test split")
 
 
-# Oversampling
+# Oversampling test data
 sm = SMOTE(random_state=42)
-train_images, train_image_labels = sm.fit_resample(train_images.reshape(-1, IMAGE_SIZE[0] * IMAGE_SIZE[1] * 3), train_image_labels)
-train_images = train_images.reshape(-1, IMAGE_SIZE[0], IMAGE_SIZE[1], 3)
 
 test_images, test_image_labels = sm.fit_resample(test_images.reshape(-1, IMAGE_SIZE[0] * IMAGE_SIZE[1] * 3), test_image_labels)
 test_images = test_images.reshape(-1, IMAGE_SIZE[0], IMAGE_SIZE[1], 3)
 
 
-# Shuffle data
-train_images, train_image_labels = shuffle(train_images, train_image_labels)
-
-
 # Create and train model
 try:
-    model = load_model('models/cnn.h5')
+    model = load_model('models-vgg19/cnn.h5')
 except:
+
+    # Oversampling train data
+    train_images, train_image_labels = sm.fit_resample(train_images.reshape(-1, IMAGE_SIZE[0] * IMAGE_SIZE[1] * 3),
+                                                       train_image_labels)
+    train_images = train_images.reshape(-1, IMAGE_SIZE[0], IMAGE_SIZE[1], 3)
+
+    # Shuffle train data
+    train_images, train_image_labels = shuffle(train_images, train_image_labels)
+
     vgg19 = VGG19(
         include_top=False,
         weights='imagenet',
@@ -116,7 +119,7 @@ except:
     model.compile(optimizer="adam", loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
     history = model.fit(train_images, train_image_labels, epochs=20, verbose=1)
-    model.save('models/cnn.h5')
+    model.save('models-vgg19/cnn.h5')
 
     print(history.history.keys())
 
