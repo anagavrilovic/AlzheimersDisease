@@ -4,16 +4,14 @@ import os
 
 from imblearn.over_sampling import SMOTE
 
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.layers import Dropout
-from tensorflow.keras.layers import Conv2D
-from tensorflow.keras.layers import MaxPool2D
-from tensorflow.keras.layers import Flatten
-from tensorflow.keras.applications import VGG19
-from tensorflow.keras.models import load_model
-import tensorflow as tf
-import tensorflow.keras.backend as K
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.layers import Dropout
+from keras.layers import Conv2D
+from keras.layers import MaxPool2D
+from keras.layers import Flatten
+from keras.applications import VGG19
+from keras.models import load_model
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, accuracy_score, classification_report
@@ -87,8 +85,7 @@ try:
 except:
 
     # Oversampling train data
-    train_images, train_image_labels = sm.fit_resample(train_images.reshape(-1, IMAGE_SIZE[0] * IMAGE_SIZE[1] * 3),
-                                                       train_image_labels)
+    train_images, train_image_labels = sm.fit_resample(train_images.reshape(-1, IMAGE_SIZE[0] * IMAGE_SIZE[1] * 3), train_image_labels)
     train_images = train_images.reshape(-1, IMAGE_SIZE[0], IMAGE_SIZE[1], 3)
 
     # Shuffle train data
@@ -106,12 +103,12 @@ except:
 
     model = Sequential()
     model.add(vgg19)
-    model.add(Conv2D(filters=256, kernel_size=(3, 3), activation='relu', padding="same"))
+    model.add(Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding="same"))
     model.add(MaxPool2D(pool_size=(2, 2)))
-    model.add(Conv2D(filters=512, kernel_size=(3, 3), activation='relu', padding="same"))
+    model.add(Conv2D(filters=128, kernel_size=(3, 3), activation='relu', padding="same"))
     model.add(MaxPool2D(pool_size=(2, 2)))
     model.add(Flatten())
-    model.add(Dense(units=512, activation='relu'))
+    model.add(Dense(units=128, activation='relu'))
     model.add(Dropout(0.5))
     model.add(Dense(units=class_number, activation='softmax'))
     model.summary()
@@ -120,8 +117,6 @@ except:
 
     history = model.fit(train_images, train_image_labels, epochs=20, verbose=1)
     model.save('models-vgg19/cnn.h5')
-
-    print(history.history.keys())
 
     # Plotting accuracy and loss during training
     # accuracy

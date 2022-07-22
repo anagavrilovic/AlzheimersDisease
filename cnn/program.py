@@ -2,18 +2,17 @@ import numpy as np
 import cv2
 import os
 
-import tensorflow_hub as hub
-
 from imblearn.over_sampling import SMOTE
 
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.layers import Dropout
-from tensorflow.keras.layers import Conv2D
-from tensorflow.keras.layers import MaxPool2D
-from tensorflow.keras.layers import Flatten
-from tensorflow.keras.applications import VGG19
-from tensorflow.keras.models import load_model
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.layers import Dropout
+from keras.layers import Conv2D
+from keras.layers import MaxPool2D
+from keras.layers import Flatten
+from keras.models import load_model
+from tensorflow import keras
+from keras.preprocessing import image
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, accuracy_score, classification_report
@@ -73,22 +72,24 @@ test_images = test_images / 255
 print("Train test split")
 
 
-# Oversampling
+# Oversampling test data
 sm = SMOTE(random_state=42)
-train_images, train_image_labels = sm.fit_resample(train_images.reshape(-1, IMAGE_SIZE[0] * IMAGE_SIZE[1] * 1), train_image_labels)
-train_images = train_images.reshape(-1, IMAGE_SIZE[0], IMAGE_SIZE[1], 1)
 
 test_images, test_image_labels = sm.fit_resample(test_images.reshape(-1, IMAGE_SIZE[0] * IMAGE_SIZE[1] * 1), test_image_labels)
 test_images = test_images.reshape(-1, IMAGE_SIZE[0], IMAGE_SIZE[1], 1)
 
 
-# Shuffle data
-train_images, train_image_labels = shuffle(train_images, train_image_labels)
-
-
 # Create and train model
 try:
     model = load_model('models/cnn.h5')
+
+    # Oversampling train data
+    train_images, train_image_labels = sm.fit_resample(train_images.reshape(-1, IMAGE_SIZE[0] * IMAGE_SIZE[1] * 1),
+                                                       train_image_labels)
+    train_images = train_images.reshape(-1, IMAGE_SIZE[0], IMAGE_SIZE[1], 1)
+
+    # Shuffle train data
+    train_images, train_image_labels = shuffle(train_images, train_image_labels)
 except:
     model = Sequential()
 
@@ -174,3 +175,7 @@ print(classification_report(y_true=list(map(str, test_image_labels_str)),
                             y_pred=list(map(str, predicted_labels_str)),
                             target_names=list(map(str, classes))))
 
+
+# Heat maps
+image = test_images[0]
+print(image.shape)
