@@ -20,9 +20,6 @@ from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, accuracy_s
 from sklearn.utils import shuffle
 import matplotlib.pyplot as plt
 
-
-# PRETRAINED_MODEL_URL = "https://tfhub.dev/google/tf2-preview/mobilenet_v2/feature_vector/4" 74.31%
-PRETRAINED_MODEL_URL = "https://tfhub.dev/google/imagenet/resnet_v2_101/feature_vector/5"
 DATASET_PATH = '..' + os.path.sep + 'dataset'
 IMAGE_SIZE = (128, 128)
 
@@ -53,7 +50,7 @@ class_number = len(classes)
 train_images = []
 train_image_labels = []
 for image_path, image_label in images_dict.items():
-    img = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB)
+    img = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2GRAY)
     img = cv2.resize(img, IMAGE_SIZE)
     train_images.append(img)
     train_image_labels.append(image_label)
@@ -78,11 +75,11 @@ print("Train test split")
 
 # Oversampling
 sm = SMOTE(random_state=42)
-train_images, train_image_labels = sm.fit_resample(train_images.reshape(-1, IMAGE_SIZE[0] * IMAGE_SIZE[1] * 3), train_image_labels)
-train_images = train_images.reshape(-1, IMAGE_SIZE[0], IMAGE_SIZE[1], 3)
+train_images, train_image_labels = sm.fit_resample(train_images.reshape(-1, IMAGE_SIZE[0] * IMAGE_SIZE[1] * 1), train_image_labels)
+train_images = train_images.reshape(-1, IMAGE_SIZE[0], IMAGE_SIZE[1], 1)
 
-test_images, test_image_labels = sm.fit_resample(test_images.reshape(-1, IMAGE_SIZE[0] * IMAGE_SIZE[1] * 3), test_image_labels)
-test_images = test_images.reshape(-1, IMAGE_SIZE[0], IMAGE_SIZE[1], 3)
+test_images, test_image_labels = sm.fit_resample(test_images.reshape(-1, IMAGE_SIZE[0] * IMAGE_SIZE[1] * 1), test_image_labels)
+test_images = test_images.reshape(-1, IMAGE_SIZE[0], IMAGE_SIZE[1], 1)
 
 
 # Shuffle data
@@ -93,29 +90,22 @@ train_images, train_image_labels = shuffle(train_images, train_image_labels)
 try:
     model = load_model('models/cnn.h5')
 except:
-    vgg19 = VGG19(
-        include_top=False,
-        weights='imagenet',
-        input_tensor=None,
-        input_shape=IMAGE_SIZE+(3,),
-        pooling=None,
-        classes=1000
-    )
-    vgg19.trainable = False
-
-    pretrained_layer = hub.KerasLayer(PRETRAINED_MODEL_URL, input_shape=IMAGE_SIZE+(3,), arguments=dict(batch_norm_momentum=0.997), trainable=True)
-
     model = Sequential()
-    # model.add(vgg19)
-    model.add(pretrained_layer)
-    model.add(Conv2D(filters=256, kernel_size=(3, 3), activation='relu', padding="same"))
+
+    model.add(Conv2D(input_shape=IMAGE_SIZE + (1,), filters=64, kernel_size=(3, 3), activation='relu', padding="same"))
     model.add(MaxPool2D(pool_size=(2, 2)))
-    model.add(Conv2D(filters=512, kernel_size=(3, 3), activation='relu', padding="same"))
+
+    model.add(Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding="same"))
     model.add(MaxPool2D(pool_size=(2, 2)))
+
+    model.add(Conv2D(filters=128, kernel_size=(3, 3), activation='relu', padding="same"))
+    model.add(MaxPool2D(pool_size=(2, 2)))
+
     model.add(Flatten())
-    model.add(Dense(units=512, activation='relu'))
+    model.add(Dense(units=128, activation='relu'))
     model.add(Dropout(0.5))
     model.add(Dense(units=class_number, activation='softmax'))
+
     model.summary()
 
     model.compile(optimizer="adam", loss='sparse_categorical_crossentropy', metrics=['accuracy'])
@@ -183,3 +173,4 @@ print('Accuracy:', percentage, '%')
 print(classification_report(y_true=list(map(str, test_image_labels_str)),
                             y_pred=list(map(str, predicted_labels_str)),
                             target_names=list(map(str, classes))))
+
