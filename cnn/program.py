@@ -11,8 +11,6 @@ from keras.layers import Conv2D
 from keras.layers import MaxPool2D
 from keras.layers import Flatten
 from keras.models import load_model
-from tensorflow import keras
-from keras.preprocessing import image
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, accuracy_score, classification_report
@@ -20,8 +18,8 @@ from sklearn.utils import shuffle
 import matplotlib.pyplot as plt
 import copy
 
-# from heatmaps import make_gradcam_heatmap, decode_predictions, crop_image, display_gradcam
-from heatmaps2 import make_gradcam_heatmap, save_and_display_gradcam
+from heatmaps import make_gradcam_heatmap, display_gradcam
+
 
 DATASET_PATH = '..' + os.path.sep + 'dataset'
 IMAGE_SIZE = (128, 128)
@@ -71,11 +69,12 @@ train_images, test_images, train_image_labels, test_image_labels = train_test_sp
     random_state=15,
     stratify=train_image_labels)
 
-test_image = copy.deepcopy(test_images[900])
+test_images_for_heatmaps = copy.deepcopy(test_images[0::100])
+test_image_vectors_for_heatmaps = copy.deepcopy(test_images[0::100])
 
 train_images = train_images / 255
 test_images = test_images / 255
-print("Train test split")
+
 
 # Oversampling test data
 sm = SMOTE(random_state=42)
@@ -182,17 +181,19 @@ print(classification_report(y_true=list(map(str, test_image_labels_str)),
 
 
 # Heat maps
-image = copy.deepcopy(test_images[900])
-image = np.expand_dims(image, axis=0)
+test_image_vectors_for_heatmaps = test_image_vectors_for_heatmaps / 255
+test_image_vectors_for_heatmaps = test_image_vectors_for_heatmaps.reshape(-1, IMAGE_SIZE[0], IMAGE_SIZE[1], 1)
 
-model.layers[-1].activation = None
+for idx, image_for_heatmap in enumerate(test_image_vectors_for_heatmaps):
+    image = copy.deepcopy(image_for_heatmap)
+    image = np.expand_dims(image, axis=0)
 
-preds = model.predict(image)
-heatmap = make_gradcam_heatmap(image, model, 'conv2d_2')
+    model.layers[-1].activation = None
 
-# display_gradcam(test_image, heatmap, preds, classes)
+    preds = model.predict(image)
+    heatmap = make_gradcam_heatmap(image, model, 'conv2d_2')
 
-save_and_display_gradcam(test_image, heatmap, preds, classes)
+    display_gradcam(test_images_for_heatmaps[idx], heatmap, preds, classes)
 
 ''''INTENSITY = 0.5
 heatmap = cv2.resize(heatmap, (IMAGE_SIZE[1], IMAGE_SIZE[0]))
