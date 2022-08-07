@@ -20,7 +20,8 @@ from sklearn.utils import shuffle
 import matplotlib.pyplot as plt
 import copy
 
-from heatmaps import make_gradcam_heatmap, decode_predictions, crop_image, display_gradcam
+# from heatmaps import make_gradcam_heatmap, decode_predictions, crop_image, display_gradcam
+from heatmaps2 import make_gradcam_heatmap, save_and_display_gradcam
 
 DATASET_PATH = '..' + os.path.sep + 'dataset'
 IMAGE_SIZE = (128, 128)
@@ -189,7 +190,9 @@ model.layers[-1].activation = None
 preds = model.predict(image)
 heatmap = make_gradcam_heatmap(image, model, 'conv2d_2')
 
-display_gradcam(test_image, heatmap, preds, classes)
+# display_gradcam(test_image, heatmap, preds, classes)
+
+save_and_display_gradcam(test_image, heatmap, preds, classes)
 
 ''''INTENSITY = 0.5
 heatmap = cv2.resize(heatmap, (IMAGE_SIZE[1], IMAGE_SIZE[0]))
