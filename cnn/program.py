@@ -18,6 +18,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, accuracy_score, classification_report
 from sklearn.utils import shuffle
 import matplotlib.pyplot as plt
+import copy
+
+from heatmaps import make_gradcam_heatmap, decode_predictions, crop_image, display_gradcam
 
 DATASET_PATH = '..' + os.path.sep + 'dataset'
 IMAGE_SIZE = (128, 128)
@@ -67,10 +70,11 @@ train_images, test_images, train_image_labels, test_image_labels = train_test_sp
     random_state=15,
     stratify=train_image_labels)
 
+test_image = copy.deepcopy(test_images[900])
+
 train_images = train_images / 255
 test_images = test_images / 255
 print("Train test split")
-
 
 # Oversampling test data
 sm = SMOTE(random_state=42)
@@ -177,5 +181,36 @@ print(classification_report(y_true=list(map(str, test_image_labels_str)),
 
 
 # Heat maps
-image = test_images[0]
-print(image.shape)
+image = copy.deepcopy(test_images[900])
+image = np.expand_dims(image, axis=0)
+
+model.layers[-1].activation = None
+
+preds = model.predict(image)
+heatmap = make_gradcam_heatmap(image, model, 'conv2d_2')
+
+display_gradcam(test_image, heatmap, preds, classes)
+
+''''INTENSITY = 0.5
+heatmap = cv2.resize(heatmap, (IMAGE_SIZE[1], IMAGE_SIZE[0]))
+heatmapshow = None
+heatmap = cv2.normalize(heatmap, heatmapshow, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+heatmap = cv2.applyColorMap(255 - heatmap, cv2.COLORMAP_JET)
+
+image_with_heatmap = heatmap * INTENSITY + cv2.cvtColor(np.float32(crop_image(test_image)), cv2.COLOR_GRAY2RGB)
+
+fig = plt.figure(figsize=(8, 5))
+rows = 1
+columns = 2
+
+fig.add_subplot(rows, columns, 1)
+plt.imshow(test_image, cmap='gray', vmin=0, vmax=255)
+plt.axis('off')
+plt.title("Original image")
+
+fig.add_subplot(rows, columns, 2)
+plt.imshow(image_with_heatmap.astype(np.uint8))
+plt.axis('off')
+plt.title(decode_predictions(preds, classes))
+
+plt.show()'''
