@@ -18,7 +18,7 @@ from sklearn.utils import shuffle
 import matplotlib.pyplot as plt
 import copy
 
-from heatmaps import make_gradcam_heatmap, display_gradcam
+from gradcam import apply_gradcam
 
 
 DATASET_PATH = '..' + os.path.sep + 'dataset'
@@ -51,14 +51,14 @@ class_number = len(classes)
 train_images = []
 train_image_labels = []
 for image_path, image_label in images_dict.items():
-    img = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2GRAY)
+    img = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB)
     img = cv2.resize(img, IMAGE_SIZE)
     train_images.append(img)
     train_image_labels.append(image_label)
     print(image_path)
 
-train_images = np.array(train_images, dtype=float)
-train_image_labels = np.array(train_image_labels, dtype=float)
+train_images = np.asarray(train_images)
+train_image_labels = np.asarray(train_image_labels)
 
 
 # Split to train and test
@@ -69,8 +69,7 @@ train_images, test_images, train_image_labels, test_image_labels = train_test_sp
     random_state=15,
     stratify=train_image_labels)
 
-test_images_for_heatmaps = copy.deepcopy(test_images[0::100])
-test_image_vectors_for_heatmaps = copy.deepcopy(test_images[0::100])
+test_images_for_heatmaps = copy.deepcopy(test_images[0::60])
 
 train_images = train_images / 255
 test_images = test_images / 255
@@ -79,25 +78,25 @@ test_images = test_images / 255
 # Oversampling test data
 sm = SMOTE(random_state=42)
 
-test_images, test_image_labels = sm.fit_resample(test_images.reshape(-1, IMAGE_SIZE[0] * IMAGE_SIZE[1] * 1), test_image_labels)
-test_images = test_images.reshape(-1, IMAGE_SIZE[0], IMAGE_SIZE[1], 1)
+test_images, test_image_labels = sm.fit_resample(test_images.reshape(-1, IMAGE_SIZE[0] * IMAGE_SIZE[1] * 3), test_image_labels)
+test_images = test_images.reshape(-1, IMAGE_SIZE[0], IMAGE_SIZE[1], 3)
 
 
 # Create and train model
 try:
-    model = load_model('models/cnn.h5')
-
+    model = load_model('models/cnn-rgb.h5')
+except:
     # Oversampling train data
-    train_images, train_image_labels = sm.fit_resample(train_images.reshape(-1, IMAGE_SIZE[0] * IMAGE_SIZE[1] * 1),
+    train_images, train_image_labels = sm.fit_resample(train_images.reshape(-1, IMAGE_SIZE[0] * IMAGE_SIZE[1] * 3),
                                                        train_image_labels)
-    train_images = train_images.reshape(-1, IMAGE_SIZE[0], IMAGE_SIZE[1], 1)
+    train_images = train_images.reshape(-1, IMAGE_SIZE[0], IMAGE_SIZE[1], 3)
 
     # Shuffle train data
     train_images, train_image_labels = shuffle(train_images, train_image_labels)
-except:
+
     model = Sequential()
 
-    model.add(Conv2D(input_shape=IMAGE_SIZE + (1,), filters=64, kernel_size=(3, 3), activation='relu', padding="same"))
+    model.add(Conv2D(input_shape=IMAGE_SIZE + (3,), filters=64, kernel_size=(3, 3), activation='relu', padding="same"))
     model.add(MaxPool2D(pool_size=(2, 2)))
 
     model.add(Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding="same"))
@@ -116,7 +115,7 @@ except:
     model.compile(optimizer="adam", loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
     history = model.fit(train_images, train_image_labels, epochs=20, verbose=1)
-    model.save('models/cnn.h5')
+    model.save('models/cnn-rgb.h5')
 
     print(history.history.keys())
 
@@ -179,42 +178,5 @@ print(classification_report(y_true=list(map(str, test_image_labels_str)),
                             y_pred=list(map(str, predicted_labels_str)),
                             target_names=list(map(str, classes))))
 
-
 # Heat maps
-test_image_vectors_for_heatmaps = test_image_vectors_for_heatmaps / 255
-test_image_vectors_for_heatmaps = test_image_vectors_for_heatmaps.reshape(-1, IMAGE_SIZE[0], IMAGE_SIZE[1], 1)
-
-for idx, image_for_heatmap in enumerate(test_image_vectors_for_heatmaps):
-    image = copy.deepcopy(image_for_heatmap)
-    image = np.expand_dims(image, axis=0)
-
-    model.layers[-1].activation = None
-
-    preds = model.predict(image)
-    heatmap = make_gradcam_heatmap(image, model, 'conv2d_2')
-
-    display_gradcam(test_images_for_heatmaps[idx], heatmap, preds, classes)
-
-''''INTENSITY = 0.5
-heatmap = cv2.resize(heatmap, (IMAGE_SIZE[1], IMAGE_SIZE[0]))
-heatmapshow = None
-heatmap = cv2.normalize(heatmap, heatmapshow, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-heatmap = cv2.applyColorMap(255 - heatmap, cv2.COLORMAP_JET)
-
-image_with_heatmap = heatmap * INTENSITY + cv2.cvtColor(np.float32(crop_image(test_image)), cv2.COLOR_GRAY2RGB)
-
-fig = plt.figure(figsize=(8, 5))
-rows = 1
-columns = 2
-
-fig.add_subplot(rows, columns, 1)
-plt.imshow(test_image, cmap='gray', vmin=0, vmax=255)
-plt.axis('off')
-plt.title("Original image")
-
-fig.add_subplot(rows, columns, 2)
-plt.imshow(image_with_heatmap.astype(np.uint8))
-plt.axis('off')
-plt.title(decode_predictions(preds, classes))
-
-plt.show()'''
+apply_gradcam(model, classes, test_images_for_heatmaps)
